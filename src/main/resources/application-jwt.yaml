@@ -1,0 +1,4 @@
+jwt:
+  secret: ${JWT_SECRET}
+  access-token-validity-in-milliseconds: 3600000 #1시간
+  refresh-token-validity-in-milliseconds: 1209600000 #14일

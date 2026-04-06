@@ -5,7 +5,6 @@ services:
     container_name: smart-farm-api
     restart: always
     ports:
-      # 외부 포트는 .env에서 관리하세 (예: 8080 또는 8081)
       - "${SERVER_PORT}:8080"
     environment:
       - SPRING_DATASOURCE_URL=jdbc:mysql://mysql-db:3306/${DB_NAME}?serverTimezone=Asia/Seoul
@@ -17,13 +16,12 @@ services:
       - mysql-db
       - mosquitto
 
-  # 2. 데이터 금고 (MySQL)
+  # 2. MySQL
   mysql-db:
     image: mysql:8.0
     container_name: mysql-db
     restart: always
     ports:
-      # 포트 충돌 방지를 위해 .env에서 3307 등으로 설정 가능하네
       - "${DB_PORT}:3306"
     environment:
       - MYSQL_ROOT_PASSWORD=${DB_PASSWORD}

@@ -49,17 +49,17 @@ public class SmartFarmMqttService {
     private void processSensorData(String payload) throws JsonProcessingException {
         SensorLogDataDto dto = objectMapper.readValue(payload, SensorLogDataDto.class);
 
-        // 1. DB에서 Device 객체 조회 (유저 회원가입 때와 동일한 원리!) [cite: 28]
+        // 1. DB에서 Device 객체 조회
         Device device = deviceRepository.findById(dto.getDeviceId())
                 .orElseThrow(() -> new IllegalArgumentException("등록되지 않은 기기입니다: " + dto.getDeviceId()));
 
-        // 2. 이상값(isAbnormal) 판단 로직 (선택 사항이지만 명세서에 있으니 챙겨주지) [cite: 33]
+        // 2. 이상값(isAbnormal) 판단 로직
         boolean isAbnormal = dto.getTemperature().compareTo(new BigDecimal("40.0")) > 0 ||
                 dto.getSoilMoisture().compareTo(new BigDecimal("10.0")) < 0;
 
         // 3. DB에 센서 데이터 저장
         SensorLog logEntity = SensorLog.builder()
-                .device(device) // 문자열 ID가 아니라 Device 객체를 통째로 주입!
+                .device(device) 
                 .temperature(dto.getTemperature())
                 .humidity(dto.getHumidity())
                 .soilMoisture(dto.getSoilMoisture())

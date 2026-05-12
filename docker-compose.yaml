@@ -5,7 +5,6 @@ services:
     container_name: smart-farm-api
     restart: always
     ports:
-      # 외부 포트는 .env에서 관리하세 (예: 8080 또는 8081)
       - "${SERVER_PORT}:8080"
     environment:
       - SPRING_DATASOURCE_URL=jdbc:mysql://mysql-db:3306/${DB_NAME}?serverTimezone=Asia/Seoul
@@ -17,13 +16,12 @@ services:
       - mysql-db
       - mosquitto
 
-  # 2. 데이터 금고 (MySQL)
+  # 2. MySQL
   mysql-db:
     image: mysql:8.0
     container_name: mysql-db
     restart: always
     ports:
-      # 포트 충돌 방지를 위해 .env에서 3307 등으로 설정 가능하네
       - "${DB_PORT}:3306"
     environment:
       - MYSQL_ROOT_PASSWORD=${DB_PASSWORD}
@@ -50,8 +48,15 @@ services:
     container_name: mediamtx
     restart: always
     ports:
-      - "1935:1935" # RTMP (입력용)
-      - "8888:8888" # HLS (출력용)
-
+      - "1935:1935" # RTMP (OBS나 일반 송출용)
+      - "8554:8554" # RTSP (라즈베리파이 rpicam-vid 송출용 - 필수!)
+      - "8888:8888" # HLS (리액트 웹 출력용)
+      - "8889:8889" # WebRTC (초저지연 출력용 - 옵션)
+    volumes:
+      # 설정 파일을 외부로 빼서 우리가 직접 튜닝할 수 있게 합니다.
+      - ./mediamtx.yml:/mediamtx.yml
+    environment:
+      # 환경 변수로도 설정 가능하지만, 파일 매핑이 더 관리하기 편합니다.
+      - MTX_PROTOCOLS=tcp
 volumes:
   mysql_data:

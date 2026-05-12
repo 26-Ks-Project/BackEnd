@@ -17,7 +17,7 @@ import org.springframework.messaging.MessageHandler;
 @Configuration
 public class MqttConfig {
 
-    private static final String BROKER_URL = "tcp://localhost:1883"; //Mosquitto 주소
+    private static final String BROKER_URL = "tcp://host.docker.internal:1883";
     private static final String CLIENT_ID = "spring-boot-server";
 
     // 라즈베리 파이로부터 센서 데이터 및 AI 분석 결과를 받을 토픽 [cite: 69, 83]
@@ -30,6 +30,11 @@ public class MqttConfig {
         MqttConnectOptions options = new MqttConnectOptions();
         options.setServerURIs(new String[] { BROKER_URL });
         options.setCleanSession(true);
+
+        options.setAutomaticReconnect(true); // 연결 끊기면 알아서 다시 붙음
+        options.setKeepAliveInterval(60);    // 60초마다 생존 확인
+        options.setConnectionTimeout(30);    // 연결 대기 시간 30초
+
         factory.setConnectionOptions(options);
         return factory;
     }
@@ -65,4 +70,5 @@ public class MqttConfig {
     public MessageChannel mqttOutboundChannel() {
         return new DirectChannel();
     }
+
 }

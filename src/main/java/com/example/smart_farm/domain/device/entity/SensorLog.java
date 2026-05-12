@@ -11,7 +11,7 @@ import java.time.LocalDateTime;
 
 @Entity
 @Table(name = "sensor_logs", indexes = {
-        @Index(name = "idx_device_time", columnList = "device_id, created_at") // 조회 최적화 인덱스
+        @Index(name = "idx_device_time", columnList = "device_id, created_at")
 })
 @Getter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
@@ -27,30 +27,33 @@ public class SensorLog {
     private Device device;
 
     @Column(precision = 5, scale = 2)
-    private BigDecimal temperature; // 온도 (최대 999.99)
+    private BigDecimal temperature;
 
     @Column(precision = 5, scale = 2)
-    private BigDecimal humidity; // 습도 (최대 999.99)
+    private BigDecimal humidity;
 
     @Column(name = "soil_moisture", precision = 10, scale = 2)
-    private BigDecimal soilMoisture; // 토양 수분 (최대 99,999,999.99)
+    private BigDecimal soilMoisture;
 
-    private Integer illuminance; // 조도 (INT)
+    private Integer illuminance;
 
     @Column(name = "is_abnormal")
     private Boolean isAbnormal = false;
 
     @Column(name = "created_at", updatable = false)
-    private LocalDateTime createdAt = LocalDateTime.now();
+    private LocalDateTime createdAt;
 
     @Builder
     public SensorLog(Device device, BigDecimal temperature, BigDecimal humidity,
-                     BigDecimal soilMoisture, Integer illuminance, Boolean isAbnormal) {
+                     BigDecimal soilMoisture, Integer illuminance, Boolean isAbnormal,
+                     LocalDateTime createdAt) { // 1. 여기에 파라미터 추가
         this.device = device;
         this.temperature = temperature;
         this.humidity = humidity;
         this.soilMoisture = soilMoisture;
         this.illuminance = illuminance;
         this.isAbnormal = isAbnormal != null ? isAbnormal : false;
+        // 2. 파라미터로 받은 createdAt을 필드에 할당 (null이면 현재 시간)
+        this.createdAt = createdAt != null ? createdAt : LocalDateTime.now();
     }
 }

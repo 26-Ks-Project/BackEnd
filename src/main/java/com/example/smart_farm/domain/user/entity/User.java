@@ -36,6 +36,9 @@ public class User {
     @Column(name = "updated_at")
     private LocalDateTime updatedAt = LocalDateTime.now(); // [cite: 70, 71]
 
+    @Column(nullable = false)
+    private int xp = 0; // 기본값 0 세팅
+
     @Builder
     public User(String email, String password, Device device) {
         this.email = email;

@@ -20,7 +20,6 @@ public class MqttSensorDataHandler implements MessageHandler {
     private final MqttService smartFarmMqttService; // 전용 서비스 주입
 
     @Override
-    // @Transactional 제거! 통신 핸들러는 가벼워야 합니다.
     @ServiceActivator(inputChannel = "mqttInputChannel")
     public void handleMessage(Message<?> message) throws MessagingException {
         String topic = message.getHeaders().get("mqtt_receivedTopic", String.class);

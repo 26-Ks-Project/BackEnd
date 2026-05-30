@@ -25,9 +25,16 @@ public class DeviceControlService {
         // 2. 전달할 명령을 JSON 형태의 String으로 생성 (DTO -> JSON 변환)
         String payload = "{\"command\": \"PUMP_ON\", \"duration\": 30}";
 
-        // 3. 발사!
         mqttPublisher.sendControlCommand(topic, payload);
 
         log.info("제어 명령 발송 완료 - 대상: {}, 명령: {}", topic, payload);
+    }
+
+    public void turnOnSupplement(String deviceId) {
+        String topic = "smartfarm/" + deviceId + "/control";
+        // 영양제 공급기 제어를 위한 페이로드 명세서 정의
+        String payload = "{\"command\": \"SUPPLEMENT_ON\", \"duration\": 15}";
+        mqttPublisher.sendControlCommand(topic, payload);
+        log.info("💊 영양제 명령 발송 완료 - 토픽: {}, 페이로드: {}", topic, payload);
     }
 }

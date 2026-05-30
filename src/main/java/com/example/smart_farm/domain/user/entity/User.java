@@ -45,4 +45,11 @@ public class User {
         this.password = password;
         this.device = device;
     }
+
+    public void addXp(int amount) {
+        if (amount < 0) {
+            throw new IllegalArgumentException("추가할 경험치는 음수일 수 없습니다.");
+        }
+        this.xp += amount;
+    }
 }

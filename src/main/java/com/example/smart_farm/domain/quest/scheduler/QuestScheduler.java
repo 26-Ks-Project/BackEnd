@@ -30,7 +30,7 @@ public class QuestScheduler {
      * 매일 자정(00:00:00)에 실행되는 크론탭
      * 초 분 시 일 월 요일
      */
-    @Scheduled(cron = "*/5 * * * * *")
+    @Scheduled(cron = "0 0 0 * * *")
     @Transactional
     public void assignDailyQuests() {
         log.info("⏰ 자정 스케줄러 가동: 모든 유저에게 일일 퀘스트 배정을 시작합니다.");

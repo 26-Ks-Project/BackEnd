@@ -1,8 +1,10 @@
 package com.example.smart_farm.domain.quest.service;
 
 import com.example.smart_farm.domain.quest.dto.UserDailyQuestResponseDto;
+import com.example.smart_farm.domain.quest.entity.Quest;
 import com.example.smart_farm.domain.quest.entity.UserDailyQuest;
 import com.example.smart_farm.domain.quest.repository.UserDailyQuestRepository;
+import com.example.smart_farm.domain.user.entity.User;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -61,6 +63,12 @@ public class QuestService {
         // 엔티티 내부 비즈니스 로직 호출 (isCompleted = true 및 시간 업데이트)
         dailyQuest.complete();
 
-        // 별도의 save() 호출 없이도 영속성 컨텍스트의 Dirty Checking에 의해 자동 반영됩니다.
+        User user = dailyQuest.getUser();
+        Quest quest = dailyQuest.getQuest(); // UserDailyQuest 내에 Quest 연관관계가 있다고 가정합니다.
+
+        if (quest != null && quest.getRewardPoints() != null) {
+            int rewardXp = quest.getRewardPoints();
+            user.addXp(rewardXp); // 유저 엔티티의 xp 필드 증가
+        }
     }
 }

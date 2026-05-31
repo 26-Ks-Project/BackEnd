@@ -3,22 +3,34 @@ package com.example.smart_farm.domain.quest.service;
 import com.example.smart_farm.domain.quest.dto.UserDailyQuestResponseDto;
 import com.example.smart_farm.domain.quest.entity.Quest;
 import com.example.smart_farm.domain.quest.entity.UserDailyQuest;
+import com.example.smart_farm.domain.quest.repository.QuestRepository;
 import com.example.smart_farm.domain.quest.repository.UserDailyQuestRepository;
 import com.example.smart_farm.domain.user.entity.User;
+import com.example.smart_farm.domain.user.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDate;
+import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
+@Slf4j
 @Transactional(readOnly = true) // 기본 읽기 전용 (성능 최적화)
 public class QuestService {
 
     private final UserDailyQuestRepository userDailyQuestRepository;
+    private final UserRepository userRepository;
+    private final QuestRepository questRepository;
+    private final QuestAssignExecutor questAssignExecutor;
 
     /**
      * 1. 특정 유저의 오늘 자 일일 퀘스트 전체 목록 조회
@@ -70,5 +82,40 @@ public class QuestService {
             int rewardXp = quest.getRewardPoints();
             user.addXp(rewardXp); // 유저 엔티티의 xp 필드 증가
         }
+    }
+
+    @Transactional(readOnly = true) // 데이터 로드 중심이므로 readOnly 설정
+    public void processDailyQuestAssignment() {
+        LocalDate today = LocalDate.now();
+
+        List<Quest> allQuests = questRepository.findAll();
+        if (allQuests.size() < 4) {
+            log.error("❌ 배정 실패: 전체 퀘스트 개수가 4개 미만입니다. DB를 확인하세요.");
+            return;
+        }
+
+        List<Quest> shuffleTarget = new ArrayList<>(allQuests);
+        int page = 0;
+        int pageSize = 100;
+        Page<User> userPage;
+
+        do {
+            userPage = userRepository.findAll(PageRequest.of(page, pageSize));
+
+            for (User user : userPage.getContent()) {
+                try {
+                    Collections.shuffle(shuffleTarget);
+                    List<Quest> selectedQuests = shuffleTarget.stream()
+                            .limit(4)
+                            .collect(Collectors.toList());
+
+                    // 외부 컴포넌트 호출을 통해 REQUIRES_NEW 트랜잭션이 정상 작동함
+                    questAssignExecutor.assignToUser(user, selectedQuests, today);
+                } catch (Exception e) {
+                    log.error("❌ 유저 ID {}번 퀘스트 배정 중 에러 발생 (건너뜀): {}", user.getId(), e.getMessage());
+                }
+            }
+            page++;
+        } while (userPage.hasNext());
     }
 }

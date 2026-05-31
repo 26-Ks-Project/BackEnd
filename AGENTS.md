@@ -31,3 +31,11 @@
 ## 5. Interaction Policy
 - **Language**: Respond exclusively in Korean unless explicitly requested otherwise.
 - **Response Style**: Be professional, technically precise, skip fluff, and focus on clean, secure, and production-ready enterprise code patterns.
+
+## 6. Pull Request (PR) & Documentation Rules (STRICT CONTROLS)
+- **Zero-Emoji Policy**:
+  - Do NOT include any emojis (e.g., 🚀, 🛠️, 🎯, 📦) under any circumstances in Pull Request (PR) titles, body descriptions, commit logs, or generated documentation files.
+  - Maintain an exclusively professional, text-only, and engineering-focused technical tone.
+  - **Strict Project Root Constraint**:
+    - All automated artifact creation, PR template generation, and code analysis tasks must be executed strictly within the current project workspace root directory.
+    - The agent is strictly prohibited from escaping the current workspace or generating any directories/files in the parent or external system paths. All relative file paths must resolve using the project root as the absolute base.

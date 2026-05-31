@@ -1,18 +1,19 @@
 package com.example.smart_farm.domain.device.service;
 
 import com.example.smart_farm.domain.device.dto.SensorAvgResponse;
+import com.example.smart_farm.domain.device.dto.SensorDataResponseDto;
 import com.example.smart_farm.domain.device.entity.SensorLog;
 import com.example.smart_farm.domain.device.repository.SensorLogRepository;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
 import java.util.ArrayList;
-import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
@@ -23,6 +24,45 @@ public class SensorLogService {
 
     private final SensorLogRepository sensorLogRepository;
 
+    /**
+     * 특정 디바이스의 최신 센서 로그 1건 조회
+     */
+    @Transactional(readOnly = true)
+    public SensorDataResponseDto.SensorLogDetailDto getLatestSensorData(String deviceId) {
+        SensorLog latestLog = sensorLogRepository.findTopByDeviceIdOrderByCreatedAtDesc(deviceId)
+                .orElseThrow(() -> new IllegalArgumentException("해당 디바이스의 데이터가 존재하지 않습니다. id=" + deviceId));
+        return convertToDetailDto(latestLog);
+    }
+
+    /**
+     * 특정 디바이스의 센서 히스토리 N건 조회
+     */
+    @Transactional(readOnly = true)
+    public List<SensorDataResponseDto.SensorLogDetailDto> getSensorHistory(String deviceId, int limit) {
+        Pageable pageable = PageRequest.of(0, limit);
+        List<SensorLog> logs = sensorLogRepository.findByDeviceIdOrderByCreatedAtDesc(deviceId, pageable);
+        return logs.stream()
+                .map(this::convertToDetailDto)
+                .collect(Collectors.toList());
+    }
+
+    /**
+     * 특정 디바이스의 특정 날짜(하루 전체) 센서 로그 조회
+     */
+    @Transactional(readOnly = true)
+    public List<SensorDataResponseDto.SensorLogDetailDto> getSensorLogsByDay(String deviceId, LocalDate day) {
+        LocalDateTime start = day.atStartOfDay();
+        LocalDateTime end = day.atTime(LocalTime.MAX);
+
+        List<SensorLog> logs = sensorLogRepository.findByDeviceIdAndCreatedAtBetween(deviceId, start, end);
+        return logs.stream()
+                .map(this::convertToDetailDto)
+                .collect(Collectors.toList());
+    }
+
+    /**
+     * 특정 기기의 오늘(00:00~23:59) 2시간 단위 센서 평균 데이터 조회
+     */
     @Transactional(readOnly = true)
     public List<SensorAvgResponse> getTodayTwoHourAverages(String deviceId) {
         // 1. 오늘 00:00 ~ 23:59 범위 설정
@@ -60,7 +100,7 @@ public class SensorLogService {
                     .mapToInt(SensorLog::getIlluminance).average().orElse(0.0);
 
             result.add(new SensorAvgResponse(timeLabel,
-                    round(avgTemp), round(avgHumid), round(avgSoil), round(avgIllum)));
+                     round(avgTemp), round(avgHumid), round(avgSoil), round(avgIllum)));
         }
 
         return result;
@@ -69,5 +109,17 @@ public class SensorLogService {
     // 소수점 둘째자리까지 반올림하는 헬퍼 메서드
     private double round(double value) {
         return Math.round(value * 100.0) / 100.0;
+    }
+
+    // 엔티티 -> DTO 변환 헬퍼 메서드
+    private SensorDataResponseDto.SensorLogDetailDto convertToDetailDto(SensorLog log) {
+        return SensorDataResponseDto.SensorLogDetailDto.builder()
+                .temperature(log.getTemperature())
+                .humidity(log.getHumidity())
+                .soilMoisture(log.getSoilMoisture())
+                .illuminance(log.getIlluminance())
+                .isAbnormal(log.getIsAbnormal())
+                .createdAt(log.getCreatedAt())
+                .build();
     }
 }

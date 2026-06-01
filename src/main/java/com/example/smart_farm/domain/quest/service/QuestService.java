@@ -32,12 +32,44 @@ public class QuestService {
     private final QuestRepository questRepository;
     private final QuestAssignExecutor questAssignExecutor;
 
-    /**
-     * 1. 특정 유저의 오늘 자 일일 퀘스트 전체 목록 조회
-     */
+    @Transactional
     public List<UserDailyQuestResponseDto> getTodayAllQuests(Long userId) {
-        return userDailyQuestRepository.findByUser_IdAndAssignedDate(userId, LocalDate.now())
-                .stream()
+        LocalDate today = LocalDate.now();
+
+        // 1. 먼저 오늘 자 할당된 퀘스트가 있는지 조회
+        List<UserDailyQuest> dailyQuests = userDailyQuestRepository.findByUser_IdAndAssignedDate(userId, today);
+
+        // 2. 자정 배치 누락자 또는 신규 가입자이므로 실시간 구제 로직 가동
+        if (dailyQuests.isEmpty()) {
+            log.warn("⚠️ 유저 ID {}번의 오늘 자 퀘스트가 존재하지 않습니다. 실시간 동적 할당을 시작합니다.", userId);
+
+            // 유저 정보 조회
+            User user = userRepository.findById(userId)
+                    .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 유저입니다. ID: " + userId));
+
+            // 마스터 퀘스트 테이블에서 전체 목록 로드
+            List<Quest> allQuests = questRepository.findAll();
+            if (allQuests.size() < 4) {
+                log.error("❌ 실시간 배정 실패: 마스터 퀘스트 개수가 4개 미만입니다.");
+                throw new IllegalStateException("시스템 내에 배정 가능한 퀘스트가 부족합니다.");
+            }
+
+            // 무작위 4개 추출
+            List<Quest> shuffleTarget = new ArrayList<>(allQuests);
+            Collections.shuffle(shuffleTarget);
+            List<Quest> selectedQuests = shuffleTarget.stream()
+                    .limit(4)
+                    .collect(Collectors.toList());
+
+            // 💡 중요: 외부 컴포넌트(Executor)를 호출하여 REQUIRES_NEW 트랜잭션으로 안전하게 저장
+            questAssignExecutor.assignToUser(user, selectedQuests, today);
+
+            // 3. 저장이 완료되었으므로 DB에서 최종 데이터 재조회
+            dailyQuests = userDailyQuestRepository.findByUser_IdAndAssignedDate(userId, today);
+        }
+
+        // 4. 최종 데이터를 DTO로 변환하여 응답
+        return dailyQuests.stream()
                 .map(UserDailyQuestResponseDto::from)
                 .collect(Collectors.toList());
     }

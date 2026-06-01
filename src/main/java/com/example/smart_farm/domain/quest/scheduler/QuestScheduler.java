@@ -26,16 +26,13 @@ import java.util.stream.Collectors;
 @Component
 @RequiredArgsConstructor
 public class QuestScheduler {
-
-    private final UserRepository userRepository;
-    private final QuestRepository questRepository;
     private final QuestService questService;
 
     /**
      * 매일 자정(00:00:00)에 실행되는 크론탭
      * 초 분 시 일 월 요일
      */
-    @Scheduled(cron = "0 0 0 * * *", zone = "Aisa/Seoul")
+    @Scheduled(cron = "0 0 0 * * *", zone = "Asia/Seoul")
     @Transactional
     public void assignDailyQuests() {
         log.info("⏰ 자정 스케줄러 가동: 일일 퀘스트 배정 프로세스를 트리거합니다.");

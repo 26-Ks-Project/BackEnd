@@ -1,5 +1,6 @@
 package com.example.smart_farm.global.mqtt.config;
 
+import org.springframework.beans.factory.annotation.Value;
 import org.eclipse.paho.client.mqttv3.MqttConnectOptions;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -17,7 +18,8 @@ import org.springframework.messaging.MessageHandler;
 @Configuration
 public class MqttConfig {
 
-    private static final String BROKER_URL = "tcp://host.docker.internal:1883";
+    @Value("${MQTT_BROKER_URL:tcp://mosquitto:1883}")
+    private String BROKER_URL;
     private static final String CLIENT_ID = "spring-boot-server";
 
     // 라즈베리 파이로부터 센서 데이터 및 AI 분석 결과를 받을 토픽 [cite: 69, 83]

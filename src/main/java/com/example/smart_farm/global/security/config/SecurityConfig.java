@@ -40,6 +40,7 @@ public class SecurityConfig {
 
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers("/api/v1/auth/**").permitAll() // 로그인, 회원가입은 모두 허용
+                        .requestMatchers("/error").permitAll()
                         .anyRequest().authenticated() // 나머지는 인증 필요
                 )
 
@@ -53,7 +54,13 @@ public class SecurityConfig {
     public CorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration configuration = new CorsConfiguration();
 
-        configuration.addAllowedOrigin("http://localhost:5173"); // 리액트 주소 허용
+        configuration.addAllowedOrigin("http://localhost:5173");
+
+        // 2. 버셀 대표(운영) 도메인 허용 (맨 끝에 슬래시 '/' 반드시 제거!)
+        configuration.addAllowedOrigin("https://front-end-fawn-nu.vercel.app");
+
+        // 3. 깃허브 푸시할 때마다 매번 바뀌는 버셀의 모든 프리뷰 주소를 한 번에 허용 (추천)
+        configuration.addAllowedOriginPattern("https://*-wonkyu-song-s-projects.vercel.app");
         configuration.addAllowedMethod("*"); // 모든 HTTP 메서드 허용 (GET, POST, PUT 등)
         configuration.addAllowedHeader("*"); // 모든 헤더 허용
         configuration.setAllowCredentials(true); // 자격 증명(쿠키, 인증 헤더 등) 허용

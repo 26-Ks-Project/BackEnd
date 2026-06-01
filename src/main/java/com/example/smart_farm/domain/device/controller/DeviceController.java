@@ -19,7 +19,6 @@ import java.util.Map;
 @RestController
 @RequestMapping("/api/v1/devices")
 @RequiredArgsConstructor
-@CrossOrigin(origins = "http://localhost:3000", allowCredentials = "true") // 프론트 연동 대비 CORS 추가
 public class DeviceController {
 
     private final SensorLogService sensorLogService;
